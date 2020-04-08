@@ -56,6 +56,7 @@ namespace ObsClock.Models
         /// <summary>
         /// 常に時刻表示をする時間帯の指定 (既定値: 午前6時～午前10時)
         /// </summary>
+        [JsonProperty("alwaysShowClockTimes")]
         public TimeRange[] AlwaysShowClockTimes { get; set; } = new[] { new TimeRange { Start = new TimeSpan(6, 0, 0), End = new TimeSpan(10, 0, 0) } };
     }
 

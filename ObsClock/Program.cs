@@ -44,13 +44,13 @@ namespace ObsClock
                         if (IsAlwaysShowClockTime)
                         {
                             // 常に表示
-                            ShowClock(_textItem);
+                            ShowClock();
 
                             _nextShowTime = NextShowClockTime(1);
                         }
                         else
                         {
-                            ShowClock(_textItem, TimeSpan.FromSeconds(Settings!.ShowDuration));
+                            ShowClock(TimeSpan.FromSeconds(Settings!.ShowDuration));
 
                             _nextShowTime = NextShowClockTime(Settings!.ShowInterval);
                         }
@@ -64,6 +64,7 @@ namespace ObsClock
         private static void ObsWebSocket_Disconnected(object? sender, EventArgs e)
         {
             Console.WriteLine($"{Settings?.Url} から切断しました");
+            ClockTimer.Stop();
         }
 
         private static void ObsWebSocket_Connected(object? sender, EventArgs e)
@@ -104,9 +105,9 @@ namespace ObsClock
         /// </summary>
         /// <param name="item"></param>
         /// <param name="message"></param>
-        private static void SetText(SceneItem? item, string message)
+        private static void SetText(string message)
         {
-            if (item == null)
+            if (_textItem == null)
             {
                 return;
             }
@@ -116,9 +117,9 @@ namespace ObsClock
                 return;
             }
 
-            var prop = new TextProperty { Source = item.SourceName, Text = message };
+            var prop = new TextProperty { Source = _textItem.SourceName, Text = message };
             var jObject = JObject.FromObject(prop);
-            ObsWebSocket.Api.SetSourceSettings(item.SourceName, jObject);
+            ObsWebSocket.Api.SetSourceSettings(_textItem.SourceName, jObject);
         }
 
         /// <summary>
@@ -134,10 +135,16 @@ namespace ObsClock
         /// 時報を表示 (永続的)
         /// </summary>
         /// <param name="item"></param>
-        private static void ShowClock(SceneItem? item)
+        private static void ShowClock()
         {
+            // 一度消す
+            SetText(string.Empty);
+
+            // 新しいのを作る
+            _textItem = GetTextItem(Settings?.TextSourceName);
+
             var clockText = GetClockText();
-            SetText(item, clockText);
+            SetText(clockText);
 
             Console.WriteLine($"時刻送出: {clockText}");
         }
@@ -147,20 +154,23 @@ namespace ObsClock
         /// </summary>
         /// <param name="item"></param>
         /// <param name="duration"></param>
-        private static async void ShowClock(SceneItem? item, TimeSpan duration)
+        private static async void ShowClock(TimeSpan duration)
         {
             // 一度消す
-            SetText(item, string.Empty);
+            SetText(string.Empty);
+
+            // 新しいのを作る
+            _textItem = GetTextItem(Settings?.TextSourceName);
 
             var clockText = GetClockText();
 
             Console.WriteLine($"時刻送出: {clockText} 消去時刻: {DateTimeOffset.Now + duration:HH:mm:ss}");
 
-            SetText(item, clockText);
+            SetText(clockText);
 
             await Task.Delay(duration);
 
-            SetText(item, string.Empty);
+            SetText(string.Empty);
 
             Console.WriteLine($"{DateTimeOffset.Now:HH:mm:ss} 時刻消去");
         }
