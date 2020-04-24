@@ -186,10 +186,17 @@ namespace ObsClock
             var now = DateTimeOffset.Now;
 
             // 計算で次の間隔にする
-            // 例えば 15 分間隔で、今が 10 時 40 分だった場合、 40 + (15 -(40 % 15)) = 40 + 5 = 45
+            // 例えば 15 分間隔で、今が 10 時 40 分だった場合、 40 + (15 - (40 % 15)) = 40 + 5 = 45
             var n = now.Minute + (interval - (now.Minute % interval));
+            var hourOffset = 0;
 
-            return new DateTimeOffset(now.Year, now.Month, now.Day, (n >= 60 ? now.Hour + 1 : now.Hour), (n >= 60 ? 60 - n : n), 0, now.Offset);
+            if (n >= 60)
+            {
+                n -= 60;
+                hourOffset = 1;
+            }
+
+            return new DateTimeOffset(now.Year, now.Month, now.Day, now.Hour, n, 0, now.Offset).AddHours(hourOffset);
         }
 
         private static bool IsAlwaysShowClockTime
